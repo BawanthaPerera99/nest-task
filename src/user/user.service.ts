@@ -1,70 +1,35 @@
 import { Injectable } from "@nestjs/common";
-import { users } from "src/db";
-import { CreateUserDto, FindUserDetailsDto, UpdateUserDetailsDto, UserResponseDto } from "./dto/user.dto";
+import { InjectRepository } from "@nestjs/typeorm";
+import { from, Observable } from "rxjs";
+import { UserEntity } from "src/database/user.entity";
+import { Repository } from "typeorm";
+import { CreateUserDto, FindUserDetailsDto } from "./dto/user.dto";
+import { User } from "./model/user.interface";
 
 @Injectable()
 export class UserService{
 
-    private users = users;
+    constructor(
+        @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>
+    ){}
 
-    getAllUsers(): FindUserDetailsDto[]{
-        return this.users
+    getAllUsers(): Observable<User[]>{
+        return from(this.userRepository.find());
     }
 
-    getUserById(userId: number): FindUserDetailsDto{
-        return this.users.find(user =>{
-            return user.id == userId
-        })
+    getUserById(id: number): Observable<User>{
+        return from(this.userRepository.findOne(id));
     }
 
-    createUser(payload: CreateUserDto): FindUserDetailsDto{
-        let newUser = {
-            ...payload
-        }
-
-        this.users.push(newUser);
-
-        return newUser
+    createUser(user: User): Observable<User>{
+        return from(this.userRepository.save(user));
     }
 
-    updateUser(userId: number, payload: UpdateUserDetailsDto): UserResponseDto{
-        let updatedUser: UserResponseDto
-
-        let updatedUserList = this.users.map(user =>{
-            if(user.id == userId){
-                updatedUser = {
-                    id: userId,
-                    ...payload
-                };
-                return updatedUser
-            }else{
-                return user
-            }
-        });
-
-        this.users = updatedUserList
-
-        return updatedUser
+    updateUser(id: number, user: User): Observable<any>{
+        return from(this.userRepository.update(id, user));
     }
 
-    deleteUser(userId: number): FindUserDetailsDto{
-        
-        let deletedUser: FindUserDetailsDto
-
-        let updatedUserList = this.users.map((user, pos) => {
-            if(user.id == userId){
-                deletedUser = user
-                pos = this.users.indexOf(user)
-                this.users.splice(pos, 1)
-                return deletedUser
-            }else{
-                return user
-            }
-        })
-
-        this.users = updatedUserList
-        
-        return deletedUser
-        
+    deleteUser(id: number): Observable<any>{
+        return from(this.userRepository.delete(id));
     }
 }
