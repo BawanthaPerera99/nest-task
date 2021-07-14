@@ -11,6 +11,6 @@ export class UserEntity {
   @Column()
   lastName: string;
 
-  @Column({ default: true })
+  @Column()
   isActive: boolean;
 }
